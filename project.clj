@@ -1,4 +1,4 @@
-(defproject clj-crypto "1.0.2"
+(defproject clj-crypto "1.0.3-SNAPSHOT"
   :description "Crypogrphy utilities"
   :dev-dependencies [[swank-clojure "1.4.2"]]
   :local-repo-classpath true
