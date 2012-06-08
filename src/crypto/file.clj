@@ -33,6 +33,7 @@
       (.getParameterSpec IvParameterSpec)
       (.getIV)))
 
+
 (defn make-cipher
   ([mode secret-key]
      (doto (Cipher/getInstance *cipher-algorithm*)
@@ -66,14 +67,27 @@
                 ostream (java.io.FileOutputStream. outfile)]
       (IOUtils/copy istream ostream))))
 
-(defn get-encryption-stream [infilename password]
-  (let [secret-key   (make-secret-key password)
-        cipher       (make-cipher Cipher/ENCRYPT_MODE secret-key)
-        init-vec     (get-init-vec-from-cipher cipher)
-        stream       (CipherInputStream. (FileInputStream. infilename) cipher)]
-    {:skey   (Base64/encodeBase64String (.getEncoded secret-key))
-     :ivec   (Base64/encodeBase64String init-vec)
-     :stream stream}))
+(defn get-encryption-stream
+  ([infilename password]
+     (let [secret-key   (make-secret-key password)
+           cipher       (make-cipher Cipher/ENCRYPT_MODE secret-key)
+           init-vec     (get-init-vec-from-cipher cipher)
+           stream       (CipherInputStream. (FileInputStream. infilename) cipher)]
+       {:skey   (Base64/encodeBase64String (.getEncoded secret-key))
+        :ivec   (Base64/encodeBase64String init-vec)
+        :stream stream}))
+  ([infilename secret-key init-vec]
+     (let [skey   (if (Base64/isBase64 secret-key)
+                    (Base64/decodeBase64 secret-key)
+                    secret-key)
+           ivec   (if (Base64/isBase64 init-vec)
+                    (Base64/decodeBase64 init-vec)
+                    init-vec)
+           cipher (make-cipher Cipher/ENCRYPT_MODE (SecretKeySpec. skey *key-encoding*) (IvParameterSpec. ivec))
+           stream (CipherInputStream. (FileInputStream. infilename) cipher)]
+       {:skey   (Base64/encodeBase64String skey)
+        :ivec   (Base64/encodeBase64String ivec)
+        :stream stream})))
 
 (defn get-decryption-stream [#^InputStream instream secret-key init-vec]
   (let [skey   (if (Base64/isBase64 secret-key)
@@ -84,10 +98,3 @@
                  init-vec)
         cipher (make-cipher Cipher/DECRYPT_MODE (SecretKeySpec. skey *key-encoding*) (IvParameterSpec. ivec))]
     (CipherInputStream. instream cipher)))
-
-
-(comment
-  (def *crypt-info* (file-encrypt "/home/superg/foo.txt" "/home/superg/foo.enc"))
-
-  (file-decrypt "/home/superg/foo.enc" "/home/superg/foo.dec" (:skey *crypt-info*) (:ivec *crypt-info*))
-  )
