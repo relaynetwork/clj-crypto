@@ -33,7 +33,6 @@
       (.getParameterSpec IvParameterSpec)
       (.getIV)))
 
-
 (defn make-cipher
   ([mode secret-key]
      (doto (Cipher/getInstance *cipher-algorithm*)
@@ -41,6 +40,13 @@
   ([mode secret-key init-vec]
      (doto (Cipher/getInstance *cipher-algorithm*)
        (.init mode secret-key init-vec))))
+
+(defn make-encryption-info [password]
+  (let [secret-key   (make-secret-key password)
+        cipher       (make-cipher Cipher/ENCRYPT_MODE secret-key)
+        init-vec     (get-init-vec-from-cipher cipher)]
+    {:skey (Base64/encodeBase64String (.getEncoded secret-key))
+     :ivec (Base64/encodeBase64String init-vec)}))
 
 ;; Adapted from: http://stackoverflow.com/questions/992019/java-256-bit-aes-password-based-encryption
 (defn file-encrypt [infile outfile password]
@@ -87,6 +93,17 @@
            stream (CipherInputStream. (FileInputStream. infilename) cipher)]
        {:skey   (Base64/encodeBase64String skey)
         :ivec   (Base64/encodeBase64String ivec)
+        :stream stream})))
+
+
+(defn encrypt-stream
+  ([istream password]
+     (let [secret-key   (make-secret-key password)
+           cipher       (make-cipher Cipher/ENCRYPT_MODE secret-key)
+           init-vec     (get-init-vec-from-cipher cipher)
+           stream       (CipherInputStream. istream cipher)]
+       {:skey   (Base64/encodeBase64String (.getEncoded secret-key))
+        :ivec   (Base64/encodeBase64String init-vec)
         :stream stream})))
 
 (defn get-decryption-stream [#^InputStream instream secret-key init-vec]
