@@ -1,7 +1,7 @@
 (ns crypto.file
   (:import [javax.crypto KeyGenerator SecretKey SecretKeyFactory Cipher CipherOutputStream CipherInputStream]
            [javax.crypto.spec SecretKeySpec PBEKeySpec IvParameterSpec]
-           [java.io File FileOutputStream DataInputStream FileInputStream]
+           [java.io File FileOutputStream DataInputStream FileInputStream InputStream]
            [org.apache.commons.codec.binary Base64]
            [org.apache.commons.io IOUtils])
   (:use
