@@ -104,6 +104,18 @@
            stream       (CipherInputStream. istream cipher)]
        {:skey   (Base64/encodeBase64String (.getEncoded secret-key))
         :ivec   (Base64/encodeBase64String init-vec)
+        :stream stream}))
+  ([istream secret-key init-vec]
+     (let [skey   (if (Base64/isBase64 secret-key)
+                    (Base64/decodeBase64 secret-key)
+                    secret-key)
+           ivec   (if (Base64/isBase64 init-vec)
+                    (Base64/decodeBase64 init-vec)
+                    init-vec)
+           cipher       (make-cipher Cipher/ENCRYPT_MODE (SecretKeySpec. skey *key-encoding*) (IvParameterSpec. ivec))
+           stream       (CipherInputStream. istream cipher)]
+       {:skey   secret-key
+        :ivec   init-vec
         :stream stream})))
 
 (defn get-decryption-stream [#^InputStream instream secret-key init-vec]
