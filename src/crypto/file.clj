@@ -19,19 +19,48 @@
 (def *key-factory-algorithm* "PBKDF2WithHmacSHA1")
 (def *key-encoding*          "AES")
 
+(defn secret-key [key-bytes]
+  (SecretKeySpec. key-bytes *key-encoding*))
+
 (defn make-secret-key [password]
   (let [key-factory  (SecretKeyFactory/getInstance *key-factory-algorithm*)
         key-spec     (PBEKeySpec. (.toCharArray password)
                                   (rand-salt 20)
                                   *pbe-iteration-count*
                                   *pbe-key-length*)]
-    (SecretKeySpec. (.getEncoded (.generateSecret key-factory key-spec)) *key-encoding*)))
+    (secret-key (.getEncoded (.generateSecret key-factory key-spec)))))
 
+
+;; NB : I think this may be the same as (.getIV cipher)
+;;  - should verify they always return the same thing
 (defn get-init-vec-from-cipher [cipher]
   (-> cipher
       (.getParameters)
       (.getParameterSpec IvParameterSpec)
       (.getIV)))
+
+
+(comment
+  (def *sk* (make-secret-key "my-secret"))
+  (def *sk-bytes* (.getEncoded *sk*))
+  (Base64/encodeBase64String *sk-bytes*)
+
+
+  "KV4CZK7ji9tbOjcW6e1Myc2FyOqVPLrZbFfO2GzODQE="
+
+
+  (Base64/encodeBase64String (.getEncoded (secret-key *sk-bytes*)))
+
+  (def *key* (secret-key *sk-bytes*))
+
+  (def *cipher*  (make-cipher Cipher/ENCRYPT_MODE *key*))
+
+  (Base64/encodeBase64String (.getIV *cipher*))
+  "XubxJ7qd1sGLuzPf3mS9bA=="
+
+  (Base64(.getIV (make-cipher Cipher/ENCRYPT_MODE *key*)))
+
+)
 
 (defn make-cipher
   ([mode secret-key]
