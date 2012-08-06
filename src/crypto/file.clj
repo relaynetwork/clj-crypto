@@ -19,8 +19,35 @@
 (def *key-factory-algorithm* "PBKDF2WithHmacSHA1")
 (def *key-encoding*          "AES")
 
-(defn secret-key [key-bytes]
-  (SecretKeySpec. key-bytes *key-encoding*))
+(defn key-object? [thing]
+  (isa? (class thing) java.security.Key))
+
+(defn decode-b64 [thing]
+  (if (Base64/isBase64 thing)
+    (Base64/decodeBase64 thing)
+    thing))
+
+(defn encode-b64 [thing]
+  (if (Base64/isBase64 thing)
+    thing
+    (Base64/encodeBase64String thing)))
+
+(comment
+
+  (Base64/isBase64 "afefae")
+
+  )
+
+(defn secret-key [key-contents]
+  (cond
+    (key-object? key-contents)
+    key-contents
+
+    (string? key-contents)
+    (SecretKeySpec. (decode-b64 key-contents) *key-encoding*)
+
+    :assuming-byte-array
+    (SecretKeySpec. key-contents *key-encoding*)))
 
 (defn make-secret-key [password]
   (let [key-factory  (SecretKeyFactory/getInstance *key-factory-algorithm*)
@@ -43,13 +70,17 @@
 (comment
   (def *sk* (make-secret-key "my-secret"))
   (def *sk-bytes* (.getEncoded *sk*))
-  (Base64/encodeBase64String *sk-bytes*)
 
-
-  "KV4CZK7ji9tbOjcW6e1Myc2FyOqVPLrZbFfO2GzODQE="
-
+  *sk-bytes*
 
   (Base64/encodeBase64String (.getEncoded (secret-key *sk-bytes*)))
+  "MsLcrsT9cyVgTcM1cP9gFCoNW3gtwzGhZc1B6SMr1Kg="
+
+  (Base64/encodeBase64String (.getEncoded (secret-key (Base64/encodeBase64String *sk-bytes*))))
+  "MsLcrsT9cyVgTcM1cP9gFCoNW3gtwzGhZc1B6SMr1Kg="
+
+  (Base64/encodeBase64String (.getEncoded (secret-key (SecretKeySpec. *sk-bytes* *key-encoding*))))
+  "MsLcrsT9cyVgTcM1cP9gFCoNW3gtwzGhZc1B6SMr1Kg="
 
   (def *key* (secret-key *sk-bytes*))
 
@@ -63,12 +94,12 @@
 )
 
 (defn make-cipher
-  ([mode secret-key]
+  ([mode skey]
      (doto (Cipher/getInstance *cipher-algorithm*)
-       (.init mode secret-key)))
-  ([mode secret-key init-vec]
+       (.init mode (secret-key skey))))
+  ([mode skey init-vec]
      (doto (Cipher/getInstance *cipher-algorithm*)
-       (.init mode secret-key init-vec))))
+       (.init mode (secret-key skey) init-vec))))
 
 (defn make-encryption-info [password]
   (let [secret-key   (make-secret-key password)
@@ -134,17 +165,13 @@
        {:skey   (Base64/encodeBase64String (.getEncoded secret-key))
         :ivec   (Base64/encodeBase64String init-vec)
         :stream stream}))
-  ([istream secret-key init-vec]
-     (let [skey   (if (Base64/isBase64 secret-key)
-                    (Base64/decodeBase64 secret-key)
-                    secret-key)
-           ivec   (if (Base64/isBase64 init-vec)
-                    (Base64/decodeBase64 init-vec)
-                    init-vec)
-           cipher       (make-cipher Cipher/ENCRYPT_MODE (SecretKeySpec. skey *key-encoding*) (IvParameterSpec. ivec))
-           stream       (CipherInputStream. istream cipher)]
-       {:skey   secret-key
-        :ivec   init-vec
+  ([istream sec-key init-vec]
+     (let [skey   (secret-key sec-key)
+           ivec   (decode-b64 init-vec)
+           cipher (make-cipher Cipher/ENCRYPT_MODE skey (IvParameterSpec. ivec))
+           stream (CipherInputStream. istream cipher)]
+       {:skey   sec-key
+        :ivec   (encode-b64 init-vec)
         :stream stream})))
 
 (defn get-decryption-stream [#^InputStream instream secret-key init-vec]
