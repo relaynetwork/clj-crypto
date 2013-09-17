@@ -26,3 +26,24 @@
                   decrypted-byte-stream)
 
     (is (= message (.toString decrypted-byte-stream "UTF-8")))))
+
+
+(deftest round-robin-encrypt-stream-crytpo-params
+  (let [message               "this is a very secret message"
+        crypto-params         (crypt/make-encryption-info "supersecretpassword123")
+        input-byte-stream     (ByteArrayInputStream. (.getBytes message))
+        encrypted-byte-stream (ByteArrayOutputStream.)
+        data                  (crypt/encrypt-stream input-byte-stream (:skey crypto-params) (:ivec crypto-params))
+        decrypted-byte-stream (ByteArrayOutputStream.)]
+    ;; First encrypt the data, stream encrypted bytes to output byte array
+
+    (IOUtils/copy (:stream data) encrypted-byte-stream)
+
+    ;; Then decrypt those bytes and assert that the message is correct
+    (IOUtils/copy (crypt/get-decryption-stream
+                   (ByteArrayInputStream. (.toByteArray encrypted-byte-stream))
+                   (:skey data)
+                   (:ivec data))
+                  decrypted-byte-stream)
+
+    (is (= message (.toString decrypted-byte-stream "UTF-8")))))

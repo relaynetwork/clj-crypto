@@ -1,14 +1,22 @@
 (defproject clj-crypto "1.0.8-SNAPSHOT"
   :description "Crypogrphy utilities"
-  :dev-dependencies [[swank-clojure "1.4.2"]]
   :local-repo-classpath true
-  :plugins [[s3-wagon-private "1.1.1"]]
-  :repositories {"releases" "s3p://relay-maven-repo/releases/"
-                 "snapshots" "s3p://relay-maven-repo/snapshots/"}
-  :dependencies [[org.clojure/clojure "1.2.0"]
-                 [org.clojure/clojure-contrib                 "1.2.0"]
-                 [swank-clojure/swank-clojure                 "1.4.2"]
-                 [org.clojars.kyleburton/clj-etl-utils        "1.0.48"]
-                 [commons-lang                                "2.5"]
-                 [commons-io/commons-io                       "2.3"]
-                 [commons-codec                               "1.6"]])
+  :global-vars {*warn-on-reflection* true}
+  :plugins [[s3-wagon-private "1.1.2"]]
+  :repositories [["releases" {:url "s3p://relay-maven-repo/releases/" :creds :gpg}] 
+                 ["snapshots" {:url "s3p://relay-maven-repo/snapshots/" :creds :gpg}]]
+  :profiles             {:dev {:dependencies [[swank-clojure "1.4.3"]]}
+                         :1.2 {:dependencies [[org.clojure/clojure "1.2.0"]
+                                              [org.clojure/data.json      "0.2.2"]]}
+                         :1.3 {:dependencies [[org.clojure/clojure "1.3.0"]
+                                              [org.clojure/data.json      "0.2.3"]]}
+                         :1.4 {:dependencies [[org.clojure/clojure "1.4.0"]
+                                              [org.clojure/data.json      "0.2.3"]]}
+                         :1.5 {:dependencies [[org.clojure/clojure "1.5.1"]
+                                              [org.clojure/data.json      "0.2.3"]]}
+                         :1.6 {:dependencies [[org.clojure/clojure "1.6.0-master-SNAPSHOT"]
+                                              [org.clojure/data.json      "0.2.3"]]}}
+  :aliases              {"all" ["with-profile" "dev,1.2:dev,1.3:dev,1.4:dev,1.5:dev,1.6"]}
+  :dependencies [[commons-lang                                "2.5"]
+                 [commons-io/commons-io                       "2.4"]
+                 [commons-codec                               "1.7"]])
