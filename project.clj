@@ -1,4 +1,4 @@
-(defproject clj-crypto "1.0.8-SNAPSHOT"
+(defproject clj-crypto "1.0.8"
   :description "Crypogrphy utilities"
   :local-repo-classpath true
   :global-vars {*warn-on-reflection* true}
