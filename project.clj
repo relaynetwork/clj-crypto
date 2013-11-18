@@ -2,8 +2,10 @@
   :description "Crypogrphy utilities"
   :local-repo-classpath true
   :global-vars {*warn-on-reflection* true}
-  :plugins [[s3-wagon-private "1.1.2"]]
-  :repositories [["releases" {:url "s3p://relay-maven-repo/releases/" :creds :gpg}] 
+  :plugins [[s3-wagon-private "1.1.2"]
+            [lein-release/lein-release "1.0.5"]]
+  :lein-release {:deploy-via :clojars}
+  :repositories [["releases" {:url "s3p://relay-maven-repo/releases/" :creds :gpg}]
                  ["snapshots" {:url "s3p://relay-maven-repo/snapshots/" :creds :gpg}]]
   :profiles             {:dev {:dependencies [[swank-clojure "1.4.3"]]}
                          :1.2 {:dependencies [[org.clojure/clojure "1.2.0"]
