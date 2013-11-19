@@ -47,3 +47,25 @@
                   decrypted-byte-stream)
 
     (is (= message (.toString decrypted-byte-stream "UTF-8")))))
+
+(deftest test-encrypt-stream
+  ;; (crypt/encode-b64 (crypt/make-secret-key "banana"))
+  ;; "BaZTUTWzTsMe/sjyD5nyjub1KVeCXLXjl/7dcMxQbnM="
+  (let [secret-key "BaZTUTWzTsMe/sjyD5nyjub1KVeCXLXjl/7dcMxQbnM="
+        cipher     (crypt/make-cipher javax.crypto.Cipher/ENCRYPT_MODE secret-key)
+        cleartext   "In computing, plain text is the contents of an ordinary sequential file readable as textual material without much processing, usually opposed to formatted text and to \"binary files \" in which some portions must be interpreted as binary objects (encoded integers, real numbers, images, etc.)."
+        crypto-info (crypt/encrypt-stream (java.io.ByteArrayInputStream. (.getBytes cleartext)) secret-key (.getIV cipher))
+        ostream   (crypt/get-decryption-stream (:stream crypto-info) (:skey crypto-info) (:ivec crypto-info))
+        bytes       (byte-array (* 1024 1024))
+        result-text (loop [totread 0]
+                      (let [nread (.read ostream bytes totread (- (alength bytes) totread))]
+                        (if (< nread 0)
+                          (String. bytes 0 totread)
+                          (recur (+ totread nread)))))]
+    (is (= result-text cleartext))))
+
+(comment
+
+  (run-tests)
+
+  )

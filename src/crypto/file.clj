@@ -34,7 +34,10 @@
  (encode-b64 [x] (Base64/encodeBase64String ^bytes x))
 
  B64Decodable
- (decode-b64 [x] (Base64/decodeBase64 ^bytes x))
+ (decode-b64 [x]
+             (if (Base64/isBase64 x)
+               (Base64/decodeBase64 ^bytes x)
+               x))
 
  SecretKeyable
  (secret-key [x] (SecretKeySpec. ^bytes x key-encoding)))
