@@ -1,4 +1,4 @@
-(defproject com.relaynetwork/clj-crypto "1.0.12"
+(defproject com.relaynetwork/clj-crypto "1.0.13-SNAPSHOT"
   :description "Crypogrphy utilities"
   :local-repo-classpath true
   :global-vars {*warn-on-reflection* true}
