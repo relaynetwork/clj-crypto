@@ -34,7 +34,10 @@
  (encode-b64 [x] (Base64/encodeBase64String ^bytes x))
 
  B64Decodable
- (decode-b64 [x] x)
+ (decode-b64 [x]
+             (if (Base64/isBase64 x)
+               (Base64/decodeBase64 x)
+               x))
 
  SecretKeyable
  (secret-key [x] (SecretKeySpec. ^bytes x key-encoding)))
@@ -50,6 +53,14 @@
 
  SecretKeyable
  (secret-key [x] (SecretKeySpec. (decode-b64 x) key-encoding)))
+
+
+(extend-type
+ clojure.lang.PersistentVector
+
+ B64Decodable
+ (decode-b64 [x] (decode-b64 (byte-array (map byte x)))))
+
 
 (extend-type
  java.security.Key

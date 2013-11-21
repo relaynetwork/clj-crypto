@@ -64,6 +64,24 @@
                           (recur (+ totread nread)))))]
     (is (= result-text cleartext))))
 
+
+(deftest test-decode-b64
+  (let [base-bytes-array (let [ba (byte-array 16)]
+                           (.nextBytes (java.util.Random.) ba)
+                           ba)
+        encoded-string   (crypt/encode-b64 base-bytes-array)
+        encoded-bytes    (.getBytes encoded-string)
+        decoded-bytes    (crypt/decode-b64 encoded-string)]
+    ;; string
+    (is (= (seq base-bytes-array) (seq decoded-bytes)))
+
+    ;; persistent vector
+    (is (= (seq base-bytes-array) (seq (crypt/decode-b64 (vec encoded-bytes)))))
+
+    ;; byte array
+    (is (= (seq base-bytes-array) (seq (crypt/decode-b64 encoded-bytes))))))
+
+
 (comment
 
   (run-tests)
